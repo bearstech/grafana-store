@@ -7,6 +7,7 @@ import codecs
 
 from addict import Dict
 
+
 class GrafanaStore(Flask):
 
     def __init__(self, *args):
@@ -18,7 +19,8 @@ class GrafanaStore(Flask):
 app = GrafanaStore(__name__)
 
 
-@app.route('/grafana-dash/dashboard/<dashboard>', methods=['GET', 'PUT', 'DELETE'])
+@app.route('/grafana-dash/dashboard/<dashboard>',
+           methods=['GET', 'PUT', 'DELETE'])
 def dashboard(dashboard):
     path = 'data/%s.json' % dashboard
     if request.method == 'GET':
@@ -30,6 +32,9 @@ def dashboard(dashboard):
         with open(path, 'w') as f:
             # Check json validity
             json.dump(json.loads(request.get_data()), f)
+        return jsonify(ok=True), 201
+    elif request.method == 'DELETE':
+        os.unlink(path)
         return jsonify(ok=True), 201
     else:
         abort(400)
@@ -58,7 +63,6 @@ def search():
             d._source.group = "guest"
             d._source.tags = j.tags
             d._source.dashboard = raw
-
             hits.append(d)
         r = Dict()
         r.hits.total = len(hits)
@@ -67,9 +71,8 @@ def search():
         r.facets.tags.terms = []
         r.facets.tags.total = 0
         r.facets.tags.other = 0
-        print r
         return jsonify(r, mimetype='application/json')
 
 if __name__ == "__main__":
-    app.debug = True
+    #app.debug = True
     app.run(host='0.0.0.0')
