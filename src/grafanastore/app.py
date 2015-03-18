@@ -23,21 +23,22 @@ app = GrafanaStore(__name__)
            methods=['GET', 'PUT', 'DELETE'])
 def dashboard(dashboard):
     path = 'data/%s.json' % dashboard
-    if request.method == 'GET':
-        if not os.path.exists(path):
-            abort(404)
-        return Response(open(path, 'r').xreadlines(),
-                        mimetype='application/json')
-    elif request.method == 'PUT':
+    if request.method == 'PUT':
         with open(path, 'w') as f:
             # Check json validity
             json.dump(json.loads(request.get_data()), f)
         return jsonify(ok=True), 201
-    elif request.method == 'DELETE':
-        os.unlink(path)
-        return jsonify(ok=True), 201
     else:
-        abort(400)
+        if not os.path.exists(path):
+            abort(404)
+        if request.method == 'GET':
+            return Response(open(path, 'r').xreadlines(),
+                            mimetype='application/json')
+        elif request.method == 'DELETE':
+            os.unlink(path)
+            return jsonify(ok=True), 201
+        else:
+            abort(400)
 
 
 @app.route('/grafana-dash/dashboard/_search', methods=['POST'])
