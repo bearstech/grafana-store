@@ -1,4 +1,4 @@
-from flask import Flask, abort, Response, request, jsonify
+from flask import Flask, abort, request, jsonify
 import os
 import os.path
 import json
@@ -31,9 +31,20 @@ def dashboard(dashboard):
     else:
         if not os.path.exists(path):
             abort(404)
+
         if request.method == 'GET':
-            return Response(open(path, 'r').xreadlines(),
-                            mimetype='application/json')
+            with codecs.open(path, 'r', 'utf8') as f:
+                raw = f.read()
+            data = json.loads(raw)
+            r = Dict()
+            r._index = "grafana-dash"
+            r._version = 1
+            r._type = "dashboard"
+            r._id = dashboard
+            r.found = True
+            r._source = data
+            return jsonify(**r)
+
         elif request.method == 'DELETE':
             os.unlink(path)
             return jsonify(ok=True), 201
